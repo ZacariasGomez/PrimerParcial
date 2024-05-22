@@ -1,6 +1,8 @@
 const express = require('express');
 const rutas = express.Router();
 const ProductoModel = require('../modelos/Producto');
+const UsuarioModel = require('../modelos/Usuario');
+const CategoriaModel = require('../modelos/Categoria');
 
 //endpoint 1 Leer todos los productos
 rutas.get('/leerProducto', async (req, res) => {
@@ -17,7 +19,8 @@ rutas.post('/crearProducto', async (req, res) => {
         nombre: req.body.nombre,
         marca: req.body.marca,
         descripcion: req.body.descripcion,
-        cantidad: req.body.cantidad
+        cantidad: req.body.cantidad,
+        categoria: req.body.categoria
     })
     try {
         const nuevoProducto = await producto.save();
@@ -106,6 +109,56 @@ rutas.get('/ordenarProductos', async (req, res) => {
         res.status(500).json({ mensaje: error.message });
     }
 });
+
+//REPORTES DE LOS PRODUCTOS 
+//REPORTE 1
+
+rutas.get('/productoPorCategoria/:categoriaId', async (peticion, respuesta) =>{
+    const {categoriaId} = peticion.params;
+    console.log(categoriaId);
+    try{
+        const categoria = await CategoriaModel.findById(categoriaId);
+        if (!categoria)
+            return respuesta.status(404).json({mensaje: 'categoria no encontrada'});
+        const categorias = await ProductoModel.find({ categoria: categoriaId}).populate('categoria');
+        respuesta.json(categorias);
+
+    } catch(error){
+        respuesta.status(500).json({ mensaje :  error.message})
+    }
+})
+
+//REPORTES 2
+//sumar cantidad de productos por categoria
+
+rutas.get('/cantidadPorCategoria', async (req, res) => {
+    try {   
+        const categorias = await CategoriaModel.find();
+        const reporte = await Promise.all(
+            categorias.map( async ( categoria1 ) => {
+                const productos = await ProductoModel.find({ categoria: categoria1._id});
+                const totalCantidades = productos.reduce((sum, productos) => sum + productos.cantidad, 0);
+                return {
+                    productos: {
+                        _id: categoria1._id,
+                        descripcion: categoria1.descripcion
+                    },
+                    totalCantidades,
+                    productos: productos.map( r => ( {
+                        _id: r._id,
+                        nombre: r.nombre,
+                        marca: r.marca,
+                        descripcion: r.descripcion,
+                        cantidad: r.cantidad
+                    }))
+                }
+            } )
+        )
+        res.json(reporte);
+    } catch (error){
+        res.status(500).json({ mensaje :  error.message})
+    }
+})
 
 // exportando modulo rutas 
 module.exports = rutas;
