@@ -22,12 +22,22 @@ mongoose.connect(MONGO_URI)
         app.listen(PORT, () => {console.log("Servidor express corriendo en el puerto: "+PORT)})
     }
 ).catch( error => console.log('error de conexion', error));
+
+// Set para almacenar tokens invalidados
+const TokenInvalido = new Set();
+
+//middleware para la autenticacion autenticacion
 const autenticar = async (req, res, next)=>{
     try {
         const token = req.headers.authorization?.split(' ')[1];
         if (!token)
             res.status(401).json({mensaje: 'No existe el token de autenticacion'});
+
         const decodificar = jwt.verify(token, 'clave_secreta');
+
+        if (TokenInvalido.has(token)) {
+            return res.status(401).json({ mensaje: 'Token invalidado' });
+        }
         req.usuario = await  Usuario.findById(decodificar.usuarioId);
         next();
     }
@@ -35,6 +45,7 @@ const autenticar = async (req, res, next)=>{
         res.status(400).json({ error: error.message});
     }
 };
+
 
 // con autenticacion
 app.use('/auth',authRutas)

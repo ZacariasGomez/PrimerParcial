@@ -29,6 +29,7 @@ rutas.post('/crearProducto', async (req, res) => {
         res.status(400).json({ mensaje :  error.message})
     }
 });
+
 //endpoint 3. Actualizar productos 
 rutas.put('/editarProducto/:id', async (req, res) => {
     try {
@@ -42,6 +43,7 @@ rutas.put('/editarProducto/:id', async (req, res) => {
         res.status(400).json({ mensaje :  error.message})
     }
 })
+
 // ENDPOINT 4. eliminar productos
 rutas.delete('/eliminarProducto/:id',async (req, res) => {
     try {
@@ -55,6 +57,7 @@ rutas.delete('/eliminarProducto/:id',async (req, res) => {
         res.status(500).json({ mensaje :  error.message})
     }
 });
+
 // ENDPOINT 5 CONTAR PRODUCTOS DONDE LA CANTIDAD SEA  MAYOR A 50 
 rutas.get('/totalProductos/:cantidad', async (req, res) => {
     try {
@@ -111,17 +114,19 @@ rutas.get('/ordenarProductos', async (req, res) => {
 });
 
 //REPORTES DE LOS PRODUCTOS 
-//REPORTE 1
 
-rutas.get('/productoPorCategoria/:categoriaId', async (peticion, respuesta) =>{
-    const {categoriaId} = peticion.params;
-    console.log(categoriaId);
+//REPORTE 1 BUSCAR PRODUCTOS POR CATEGORIA 
+
+rutas.get('/productoPorCategoria/:nombre', async (peticion, respuesta) =>{
+    const {nombre} = peticion.params;
+    //console.log(descripcion);
     try{
-        const categoria = await CategoriaModel.findById(categoriaId);
+        const categoria = await CategoriaModel.findOne({nombre});
         if (!categoria)
             return respuesta.status(404).json({mensaje: 'categoria no encontrada'});
-        const categorias = await ProductoModel.find({ categoria: categoriaId}).populate('categoria');
-        respuesta.json(categorias);
+            const producto = await ProductoModel.find({ categoria: categoria._id}).populate('categoria');
+            
+            respuesta.json(producto);
 
     } catch(error){
         respuesta.status(500).json({ mensaje :  error.message})
@@ -137,11 +142,11 @@ rutas.get('/cantidadPorCategoria', async (req, res) => {
         const reporte = await Promise.all(
             categorias.map( async ( categoria1 ) => {
                 const productos = await ProductoModel.find({ categoria: categoria1._id});
-                const totalCantidades = productos.reduce((sum, productos) => sum + productos.cantidad, 0);
+                const totalCantidades = productos.reduce((sum, producto) => sum + producto.cantidad, 0);
                 return {
-                    productos: {
+                    categorias: {
                         _id: categoria1._id,
-                        descripcion: categoria1.descripcion
+                        nombre: categoria1.nombre
                     },
                     totalCantidades,
                     productos: productos.map( r => ( {
