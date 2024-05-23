@@ -34,7 +34,7 @@ const autenticar = async (req, res, next)=>{
 
           // Verificar si el token ha sido invalidado
           if (tokensInvalidos.includes(token)) {
-            return res.status(401).json({ mensaje: 'Token ya no es válido' });
+            return res.status(401).json({ mensaje: 'El Token ya no es válido..!!!' });
         }
           // Verificar el token y obtener los datos decodificados
         const decodificar = jwt.verify(token, 'clave_secreta');

@@ -58,7 +58,7 @@ rutas.post('/verificartoken', (req, res) => {
 
     const token = authHeader.split(' ')[1];
     if (tokensInvalidos.includes(token)) {
-        return res.status(401).json({ mensaje: 'Token ya no es válido' });
+        return res.status(401).json({ mensaje: 'Token invalidado.' });
     }
 
     try {
